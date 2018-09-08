@@ -3,6 +3,7 @@
 #include <map>
 #include <set>
 #include <queue>
+#include <stack>
 #define KLEENE '*'
 #define CONCAT '.'
 #define OR     '/'
@@ -46,6 +47,112 @@ bool isChar(char c)
 		return false;
 	else
 		return true;
+}
+syntaxTreeNode* constructSyntaxTreeNew(string regex)
+{
+
+	stack<syntaxTreeNode*> st;
+	syntaxTreeNode *temp;
+	for(int i=0;i<regex.size();)
+	{
+		if(isChar(regex[i])){
+			st.push(new syntaxTreeNode(regex[i]));
+		}
+		else if(regex[i]==KLEENE)
+		{
+			temp = new syntaxTreeNode;
+			temp->symbol = KLEENE;
+			
+			if(st.empty()){
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			temp->right = NULL;
+			temp->left = st.top();
+			st.pop();
+			st.push(temp);
+		}
+		else if(regex[i]==OR)
+		{
+			temp = new syntaxTreeNode;
+			temp->symbol = OR;
+			st.push(temp);
+		}
+
+		else if(regex[i]=='(')
+		{
+			int in = i+1;
+			while( in <regex.size() && regex[in]!=')' )
+				in++;
+			if(in>=regex.size())
+			{
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			st.push(constructSyntaxTreeNew(regex.substr(i+1,in-i-1)));
+			i = in+1;
+			continue;
+		}
+		else{
+
+			cerr<<"Invalid Regex!!"<<endl;
+			exit(1);
+		}
+
+		i++;
+	}
+
+	syntaxTreeNode *op1, *op2;
+
+	stack<syntaxTreeNode*> stRev;
+
+	while(!st.empty())
+	{
+		stRev.push(st.top());
+		st.pop();
+	}
+
+	op1 = op2 = NULL;
+	while(!stRev.empty())
+	{
+		if(op1==NULL)
+		{
+			op1 = stRev.top();
+			stRev.pop();
+			continue;
+		}
+
+		op2 = stRev.top();
+		stRev.pop();
+
+		if(op2->symbol == OR )
+		{
+			if(stRev.empty())
+			{
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			op2->left = op1;
+			op2->right = stRev.top();
+			stRev.pop();
+			op1 = op2;
+
+		}
+		else
+		{
+			temp = new syntaxTreeNode;
+			temp->symbol = CONCAT;
+			temp->left = op1;
+			temp->right = op2;
+			op1 = temp;
+		}
+		
+	}
+
+	return op1;
 }
 syntaxTreeNode* constructSyntaxTree(string regex)
 {
@@ -209,12 +316,12 @@ int main(){
 	regex = regex + '#';
 	
 	//Adding Concatination symbol that is most generally skipped
-	addConcatOpr(regex);
+	//addConcatOpr(regex);
 
 
 	//Constructing the syntax tree
 	syntaxTreeNode *root;
-	root = constructSyntaxTree(regex);
+	root = constructSyntaxTreeNew(regex);
 
 	//filling isNullable, firstPos, lastPos and followPos attributes
 	initialize(root);
