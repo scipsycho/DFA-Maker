@@ -1,8 +1,4 @@
-                                                                                                    
-
 strict digraph{ 
 	"Q0" -> "Q0" [ label = "a" ];
-	"Q0" -> "Q0" [ label = "b" ];
 	"Q0" [fillcolor=green, style=filled];
-	"Q0" [fillcolor=purple, style=filled];
 }

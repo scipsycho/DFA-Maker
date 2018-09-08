@@ -11,30 +11,32 @@
 using namespace std;
 
 
-int currentPos = 1;
-map<int,char> posToSym;
-struct syntaxTree{
-	
-	char        symbol;
-	syntaxTree *left;
-	syntaxTree *right;
-	bool        isNullable;
-	set<int>    firstPos;
-	set<int>    lastPos;
-	int         pos;
+int nextLeafPos = 1;
+map<int,char> nextLeafPosToSym;
 
-	syntaxTree()
+
+struct syntaxTreeNode{
+	
+	char            symbol;
+	syntaxTreeNode *left;
+	syntaxTreeNode *right;
+	bool            isNullable;
+	set<int>        firstPos;
+	set<int>        lastPos;
+	int             pos;
+
+	syntaxTreeNode()
 	{
 		symbol = 0;
 		left = NULL;	
 		right = NULL;	
 		pos = 0;
 	}
-	syntaxTree(char ch) : symbol(ch), left(NULL), right(NULL)
+	syntaxTreeNode(char ch) : symbol(ch), left(NULL), right(NULL)
 	{	
-		pos = currentPos;
-		posToSym[pos] = ch;
-		currentPos++; 
+		pos = nextLeafPos;
+		nextLeafPosToSym[pos] = ch;
+		nextLeafPos++; 
 	}
 };
 
@@ -45,11 +47,11 @@ bool isChar(char c)
 	else
 		return true;
 }
-syntaxTree* constructSyntaxTree(string regex)
+syntaxTreeNode* constructSyntaxTree(string regex)
 {
 		
-	syntaxTree *itr = NULL;
-	syntaxTree *temp, *temp2;
+	syntaxTreeNode *itr = NULL;
+	syntaxTreeNode *temp, *temp2;
 	int i = 0;
 	int in;
 	char ch;
@@ -60,13 +62,13 @@ syntaxTree* constructSyntaxTree(string regex)
 		{
 			i++;
 			if(itr==NULL)
-				itr = new syntaxTree(ch);
+				itr = new syntaxTreeNode(ch);
 			else
-				itr->right = new syntaxTree(ch);
+				itr->right = new syntaxTreeNode(ch);
 		}		
 		else if(ch==KLEENE || ch==OR || ch==CONCAT)
 		{
-			temp = new syntaxTree;
+			temp = new syntaxTreeNode;
 			temp->left = itr;
 			temp->symbol = ch;
 			itr = temp;
@@ -80,7 +82,7 @@ syntaxTree* constructSyntaxTree(string regex)
 			temp = constructSyntaxTree(regex.substr(i+1,in-i-1));
 			if( (in+1) < regex.size() && regex[in+1]==KLEENE )
 			{
-				temp2 = new syntaxTree;
+				temp2 = new syntaxTreeNode;
 				temp2->left = temp;
 				temp2->symbol = KLEENE;
 				temp = temp2;
@@ -96,61 +98,6 @@ syntaxTree* constructSyntaxTree(string regex)
 	return itr;
 }
 
-void printSpace(int num){
-
-        for(int i=0;i<num;i++)
-                std::cout<<" ";
-}
-void printTree(syntaxTree* head)
-{
-        if(head==NULL)
-                return;
-
-        int space=100;
-        int diff = 5;
-        syntaxTree* curr;
-        syntaxTree* special = new syntaxTree;
-        syntaxTree* leftArrow = new syntaxTree;
-        std::queue<syntaxTree*> Q;
-        Q.push(head);
-        Q.push(special);
-        std::queue<int> pos;
-        pos.push(space);
-        int spacesPrinted=0;
-
-        while(!Q.empty()){
-
-                curr = Q.front();
-                Q.pop();
-                if(curr==special){
-                  if(!Q.empty())
-                    Q.push(special);
-                  std::cout<<std::endl;
-                  spacesPrinted = 0;
-                  continue;
-                }
-                space = pos.front();
-                pos.pop();
-                printSpace(space - spacesPrinted);
-                spacesPrinted = space;
-                if(curr!=NULL){
-                    //cerr<<curr->symbol;
-                }
-                else
-                  //cerr<<"N";
-
-                if(curr!=NULL ){
-
-                  Q.push(curr->left);
-                  pos.push(space-diff);
-
-
-                  Q.push(curr->right);
-                  pos.push(space + diff);
-                }
-        }
-
-}
 void addConcatOpr(string &regex)
 {
 	for(int i = 1; i< regex.size();)
@@ -163,7 +110,7 @@ void addConcatOpr(string &regex)
 	}
 }
 
-void initialize(syntaxTree *head)
+void initialize(syntaxTreeNode *head)
 {
 	if(head==NULL)
 		return;
@@ -226,31 +173,8 @@ void initialize(syntaxTree *head)
 		
 	}
 }
-void showVal(syntaxTree *head)
-{
-	if(head == NULL)
-		return;
-	showVal(head->left);
-	//cerr<<head->symbol<<": "<<head->pos<<endl;
-	//cerr<<"isNullable: "<<head->isNullable<<endl;
-	//cerr<<"firstPos: ";
-	set<int>::iterator itr;
-	for(itr = head->firstPos.begin();itr!=head->firstPos.end();itr++)
-	{
-		//cout<<*itr<<", ";
-	}
-	//cerr<<endl;
-	//cerr<<"lastPos: ";
-	for(itr = head->lastPos.begin();itr!=head->lastPos.end();itr++)
-	{
-		//cerr<<*itr<<", ";
-	}
-	//cerr<<endl;
-	//cerr<<"-----------------------------"<<endl;
-	showVal(head->right);
-}
 
-void createFollow(syntaxTree *head, map<int,set<int> > &follow)
+void createFollow(syntaxTreeNode *head, map<int,set<int> > &follow)
 {
 	if(head==NULL)
 		return;
@@ -272,100 +196,108 @@ void createFollow(syntaxTree *head, map<int,set<int> > &follow)
 }
 int main(){
 
+	//regular expression
 	string regex;
-	map<int,set<int> > followSym;
-/*
-	cout<<"+------------Special Characters-----------+ "<<endl;
-	cout<<"|    *  : zero or more previous characters| "<<endl;
-	cout<<"|    $  : Epsillon or No character        | "<<endl;
-	cout<<"|    /  : or operation                    | "<<endl;
-	cout<<"|   ()  : used to group characters        | "<<endl;
-	cout<<"|    .  : and operation                   | "<<endl;
-	cout<<"+-----------------------------------------+ "<<endl;
-	cout<<"Enter the regular experession: ";
-*/
+	
+	//For storing the set of positions that can follow a current state
+	map<int,set<int> > followPos;
+	map<int,set<int> >::iterator   followPos_set_itr;
+
 	cin>>regex;
 
-	//cerr<<"Initial Regex: "<<regex<<endl;
+	//Adding pound sign to identify the final state
 	regex = regex + '#';
-	//cerr<<"Regex with pound: "<<regex<<endl;
+	
+	//Adding Concatination symbol that is most generally skipped
 	addConcatOpr(regex);
-	//cerr<<"Regex with concat: "<<regex<<endl;
-	syntaxTree *rootSyntaxTree;
 
-	rootSyntaxTree = constructSyntaxTree(regex);
 
-	initialize(rootSyntaxTree);
-	printTree(rootSyntaxTree);
-	cout<<endl;
-	createFollow(rootSyntaxTree,followSym);
+	//Constructing the syntax tree
+	syntaxTreeNode *root;
+	root = constructSyntaxTree(regex);
 
-	map<int,set<int> >::iterator fItr;
-	map<char, set<int> > nextStateSet;
-	map<char, set<int> >::iterator tItr;
-	set<int>::iterator itr;
-	showVal(rootSyntaxTree);
-	//cerr<<"Follow: "<<endl;
-	for(fItr = followSym.begin();fItr!=followSym.end();fItr++)
-	{
-		//cerr<<fItr->first<<": ";
-		for(itr=(fItr->second).begin();itr!=(fItr->second).end();itr++)
-		{
-			//cerr<<(*itr)<<", ";
-		}
-		//cerr<<endl;
-	}
-
-	map<set<int>, int> stateSetToStateNum;
-	int currStateNum = 0;
-	int stateNum = 0;
-	queue<set<int> > que;
-	set<int> currSet;
-	set<int> nextSet;
-	set<int> finalSet;
-	que.push(rootSyntaxTree->firstPos);
+	//filling isNullable, firstPos, lastPos and followPos attributes
+	initialize(root);
+	createFollow(root,followPos);
 
 	
+	
+	//For storing transitions of a particular state of given characters
+	map<char, set<int> > 	       nextStateNum;
+	map<char, set<int> >::iterator nextStateNum_itr;
+	
+	
+
+	map<set<int>, int>   setToStateNum;
+
+	//some useful variables	
+	int currStateNum = 0;
+	int stateNum     = 0;
 	char sym;
-	currentPos--;
-	//cerr<<"CurrentPos: "<<currentPos<<endl;
+
+
+	//Storing set of positions for the current state, the next state and the final state
+	set<int> 	   currSet;
+	set<int> 	   nextSet;
+	set<int>           finalSet;
+	set<int>::iterator set_itr;
+
+	//queue for processing the states
+	queue<set<int> > que;
+	que.push(root->firstPos);
+
+	//to find leaf position of the '#' character for the final set
+	nextLeafPos--;
+
+	//For the graphviz
 	cout<<"strict digraph{ "<<endl;
+	
 	while(!que.empty())
 	{
+		
 		currSet = que.front();
 		que.pop();
-		nextStateSet.clear();
-		if(stateSetToStateNum.find(currSet)==stateSetToStateNum.end())
-			stateSetToStateNum[currSet] = stateNum++;
-		for(itr = currSet.begin();itr!=currSet.end();itr++)
+		
+		nextStateNum.clear();
+		
+		//setting the statenumber if not already set. Basically mapping a set to a state number!
+		if(setToStateNum.find(currSet)==setToStateNum.end())
+			setToStateNum[currSet] = stateNum++;
+		
+		
+		//finding the next positions that are possible for every symbol
+		for( set_itr = currSet.begin() ; set_itr != currSet.end() ; set_itr++)
 		{
-			sym = posToSym[*itr];
-			nextStateSet[sym].insert(followSym[*itr].begin(),followSym[*itr].end());	
+			sym = nextLeafPosToSym[*set_itr];
+			nextStateNum[sym].insert(followPos[*set_itr].begin(),followPos[*set_itr].end());	
 		}
-		currStateNum = stateSetToStateNum[currSet];
-		if(currSet.find(currentPos) != currSet.end())
+		
+		//checking if the current state is a final state
+		currStateNum = setToStateNum[currSet];
+		if(currSet.find(nextLeafPos) != currSet.end())
 			finalSet.insert(currStateNum);
-		for(tItr = nextStateSet.begin();tItr!=nextStateSet.end();tItr++)
+		
+		for( nextStateNum_itr = nextStateNum.begin(); nextStateNum_itr != nextStateNum.end(); nextStateNum_itr++ )
 		{
-			sym = tItr->first;
+			sym = nextStateNum_itr->first;
 			if(sym=='#')
 				continue;
-			nextSet = tItr->second;
-			if(stateSetToStateNum.find(nextSet)==stateSetToStateNum.end()){
+			nextSet = nextStateNum_itr->second;
+			if(setToStateNum.find(nextSet)==setToStateNum.end()){
 				que.push(nextSet);
-				stateSetToStateNum[nextSet] = stateNum++;
+				setToStateNum[nextSet] = stateNum++;
 			}
 
-			cout<<"\t\"Q"<<currStateNum<<"\" -> \"Q"<<stateSetToStateNum[nextSet]<<"\" [ label = \""<<sym<<"\" ];"<<endl;
+			cout<<"\t\"Q"<<currStateNum<<"\" -> \"Q"<<setToStateNum[nextSet]<<"\" [ label = \""<<sym<<"\" ];"<<endl;
 
 		}	
 	}
 	cout<<"\t\"Q0\" [fillcolor=green, style=filled];"<<endl;
-	itr = finalSet.begin();
-	while(itr!=finalSet.end())
+	set_itr = finalSet.begin();
+	while(set_itr!=finalSet.end())
 	{	
-		cout<<"\t\"Q"<<(*itr)<<"\" [fillcolor=purple, style=filled];"<<endl;
-		itr++;
+		cout<<"\t\"Q"<<(*set_itr)<<"\" [fillcolor=purple, style=filled];"<<endl;
+		set_itr++;
 	}
 	cout<<"}"<<endl;
 }
