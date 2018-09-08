@@ -134,10 +134,10 @@ void printTree(syntaxTree* head)
                 printSpace(space - spacesPrinted);
                 spacesPrinted = space;
                 if(curr!=NULL){
-                    //cerr<<curr->symbol;
+                    cerr<<curr->symbol;
                 }
                 else
-                  //cerr<<"N";
+                  cerr<<"N";
 
                 if(curr!=NULL ){
 
@@ -155,7 +155,7 @@ void addConcatOpr(string &regex)
 {
 	for(int i = 1; i< regex.size();)
 	{
-		if( (isChar(regex[i-1]) && isChar(regex[i])) || (regex[i-1]==KLEENE && isChar(regex[i])) || (isChar(regex[i-1]) && regex[i]=='(')){
+		if( (isChar(regex[i-1]) && isChar(regex[i])) || (regex[i-1]==KLEENE && (isChar(regex[i]) ||  regex[i]=='(')) || (isChar(regex[i-1]) && regex[i]=='(')){
 			regex = regex.substr(0,i) + CONCAT + regex.substr(i);
 			i++;
 		}
@@ -231,22 +231,22 @@ void showVal(syntaxTree *head)
 	if(head == NULL)
 		return;
 	showVal(head->left);
-	//cerr<<head->symbol<<": "<<head->pos<<endl;
-	//cerr<<"isNullable: "<<head->isNullable<<endl;
-	//cerr<<"firstPos: ";
+	cerr<<head->symbol<<": "<<head->pos<<endl;
+	cerr<<"isNullable: "<<head->isNullable<<endl;
+	cerr<<"firstPos: ";
 	set<int>::iterator itr;
 	for(itr = head->firstPos.begin();itr!=head->firstPos.end();itr++)
 	{
 		//cout<<*itr<<", ";
 	}
-	//cerr<<endl;
-	//cerr<<"lastPos: ";
+	cerr<<endl;
+	cerr<<"lastPos: ";
 	for(itr = head->lastPos.begin();itr!=head->lastPos.end();itr++)
 	{
-		//cerr<<*itr<<", ";
+		cerr<<*itr<<", ";
 	}
-	//cerr<<endl;
-	//cerr<<"-----------------------------"<<endl;
+	cerr<<endl;
+	cerr<<"-----------------------------"<<endl;
 	showVal(head->right);
 }
 
@@ -286,11 +286,11 @@ int main(){
 */
 	cin>>regex;
 
-	//cerr<<"Initial Regex: "<<regex<<endl;
+	cerr<<"Initial Regex: "<<regex<<endl;
 	regex = regex + '#';
-	//cerr<<"Regex with pound: "<<regex<<endl;
+	cerr<<"Regex with pound: "<<regex<<endl;
 	addConcatOpr(regex);
-	//cerr<<"Regex with concat: "<<regex<<endl;
+	cerr<<"Regex with concat: "<<regex<<endl;
 	syntaxTree *rootSyntaxTree;
 
 	rootSyntaxTree = constructSyntaxTree(regex);
@@ -305,15 +305,15 @@ int main(){
 	map<char, set<int> >::iterator tItr;
 	set<int>::iterator itr;
 	showVal(rootSyntaxTree);
-	//cerr<<"Follow: "<<endl;
+	cerr<<"Follow: "<<endl;
 	for(fItr = followSym.begin();fItr!=followSym.end();fItr++)
 	{
-		//cerr<<fItr->first<<": ";
+		cerr<<fItr->first<<": ";
 		for(itr=(fItr->second).begin();itr!=(fItr->second).end();itr++)
 		{
-			//cerr<<(*itr)<<", ";
+			cerr<<(*itr)<<", ";
 		}
-		//cerr<<endl;
+		cerr<<endl;
 	}
 
 	map<set<int>, int> stateSetToStateNum;
@@ -328,7 +328,7 @@ int main(){
 	
 	char sym;
 	currentPos--;
-	//cerr<<"CurrentPos: "<<currentPos<<endl;
+	cerr<<"CurrentPos: "<<currentPos<<endl;
 	cout<<"strict digraph{ "<<endl;
 	while(!que.empty())
 	{
