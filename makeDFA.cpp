@@ -1,3 +1,4 @@
+#include <stack>
 #include <iostream>
 #include <string>
 #include <map>
@@ -38,6 +39,7 @@ struct syntaxTree{
 	}
 };
 
+void printTree(syntaxTree*);
 bool isChar(char c)
 {
 	if(c==KLEENE || c==OR || c=='(' || c==')' || c==CONCAT )
@@ -45,6 +47,117 @@ bool isChar(char c)
 	else
 		return true;
 }
+syntaxTree* constructSyntaxTreeNew(string regex)
+{
+
+	stack<syntaxTree*> st;
+	syntaxTree *temp;
+	for(int i=0;i<regex.size();)
+	{
+		if(isChar(regex[i])){
+			st.push(new syntaxTree(regex[i]));
+		}
+		else if(regex[i]==KLEENE)
+		{
+			temp = new syntaxTree;
+			temp->symbol = KLEENE;
+			
+			if(st.empty()){
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			temp->right = NULL;
+			temp->left = st.top();
+			st.pop();
+			st.push(temp);
+		}
+		else if(regex[i]==OR)
+		{
+			temp = new syntaxTree;
+			temp->symbol = OR;
+			st.push(temp);
+		}
+
+		else if(regex[i]=='(')
+		{
+			int in = i+1;
+			while( in <regex.size() && regex[in]!=')' )
+				in++;
+			if(in>=regex.size())
+			{
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			cerr<<"String left"<<regex.substr(i+1,in-i-1)<<endl;
+			temp = constructSyntaxTreeNew(regex.substr(i+1,in-i-1));
+			cerr<<"See this";
+			printTree(temp);
+			st.push(temp);
+			i = in+1;
+			continue;
+		}
+		else{
+
+			cerr<<"Invalid Regex!!"<<endl;
+			exit(1);
+		}
+
+		i++;
+	}
+
+	syntaxTree *op1, *op2;
+
+	stack<syntaxTree*> stRev;
+
+	while(!st.empty())
+	{
+		stRev.push(st.top());
+		st.pop();
+	}
+
+	op1 = op2 = NULL;
+	while(!stRev.empty())
+	{
+		if(op1==NULL)
+		{
+			op1 = stRev.top();
+			stRev.pop();
+			continue;
+		}
+
+		op2 = stRev.top();
+		stRev.pop();
+
+		if(op2->symbol == OR &&  (op2->left==NULL || op2->right==NULL))
+		{
+			if(stRev.empty())
+			{
+				cerr<<"Invalid Regex!!"<<endl;
+				exit(1);
+			}
+
+			op2->left = op1;
+			op2->right = stRev.top();
+			stRev.pop();
+			op1 = op2;
+
+		}
+		else
+		{
+			temp = new syntaxTree;
+			temp->symbol = CONCAT;
+			temp->left = op1;
+			temp->right = op2;
+			op1 = temp;
+		}
+		
+	}
+
+	return op1;
+}
+
 syntaxTree* constructSyntaxTree(string regex)
 {
 		
@@ -289,11 +402,11 @@ int main(){
 	cerr<<"Initial Regex: "<<regex<<endl;
 	regex = regex + '#';
 	cerr<<"Regex with pound: "<<regex<<endl;
-	addConcatOpr(regex);
+	//addConcatOpr(regex);
 	cerr<<"Regex with concat: "<<regex<<endl;
 	syntaxTree *rootSyntaxTree;
 
-	rootSyntaxTree = constructSyntaxTree(regex);
+	rootSyntaxTree = constructSyntaxTreeNew(regex);
 
 	initialize(rootSyntaxTree);
 	printTree(rootSyntaxTree);
