@@ -111,7 +111,7 @@ syntaxTreeNode* constructSyntaxTree(string regex)
 				exit(1);
 			}
 
-			st.push(constructSyntaxTreeNew(regex.substr(i+1,in-i-1)));
+			st.push(constructSyntaxTree(regex.substr(i+1,in-i-1)));
 			i = in+1;
 			continue;
 		}
