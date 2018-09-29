@@ -31,3 +31,15 @@ The following script makeDFA.sh will take input a regular expression and output 
 #### Future Scope
 1. Minimization of DFA
 2. Incorporation of '$' as epsilon in regex.
+
+#### Prerequisites
+Graphviz's dot
+
+
+### Example
+
+Run the script `makeDFA.sh`
+![Input](example-input.png)
+
+This will create a `DFA.png`.
+![Output](example.png)
