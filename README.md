@@ -1,4 +1,3 @@
-
 # DFA-MAKER
 ## Description
 The following script makeDFA.sh will take input a regular expression and output a DFA in form of a PNG.
