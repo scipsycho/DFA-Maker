@@ -31,10 +31,6 @@ The following script makeDFA.sh will take input a regular expression and output 
 1. Minimization of DFA
 2. Incorporation of '$' as epsilon in regex.
 
-#### Prerequisites
-Graphviz's dot
-
-
 ### Example
 
 Run the script `makeDFA.sh`
