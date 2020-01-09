@@ -27,6 +27,9 @@ The following script makeDFA.sh will take input a regular expression and output 
 1. C++ 11 or higher compiler
 2. Graphviz 'dot' installed on the system
 
+#### Installation Steps
+1. Run `make clean`
+2. Run `make`  
 #### Future Scope
 1. Minimization of DFA
 2. Incorporation of '$' as epsilon in regex.
